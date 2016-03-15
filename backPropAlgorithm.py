@@ -1,4 +1,31 @@
 import numpy as np
+import argparse
+
+def commandLineArguments():
+	parser = argparse.ArgumentParser()
+	parser.add_argument("layer", help="e.g. 2,2,2,1 means 2 input nodes, layer 1 hidden with 2 nodes, layer 2 hidden with 2 nodes, 1 output node")
+	
+	args = parser.parse_args()
+	arg_arrays = (args.layer.split(","))
+	arg_arrays = [int(x) for x in arg_arrays]
+	return tuple(arg_arrays)
+
+def readDataFile:
+	data_files = [];
+	with open('data.txt', 'rb') as f:
+    reader = csv.reader(f)
+    for row in reader:
+        data_files.append(list(row))
+    return data_files
+
+def readStructureFile:
+	structure_files = [];
+	with open('data.txt', 'rb') as f:
+    reader = csv.reader(f)
+    for row in reader:
+        structure_files.append(list(row))
+    return structure_files
+
 
 def sigmoid(x):
     return 1.0/(1.0 + np.exp(-x))
@@ -40,7 +67,7 @@ class BackPropagationNetwork:
 
 		return  self._layerOutput[-1].T
 
-	def train(self, input, target, trainingRate = 0.05, momentum = 0.5):
+	def train(self, input, target, trainingRate = 0.3, momentum = 0.9):
 		delta = []
 		lnCases = input.shape[0]
 
@@ -62,8 +89,8 @@ class BackPropagationNetwork:
 			else:
 				layerOutput = np.vstack([self._layerOutput[index - 1], np.ones([1, self._layerOutput[index - 1].shape[1]])])	
 
-			currentWeightDelta = np.sum(\
-                                layerOutput[None,:,:].transpose(2, 0 ,1) * delta[deltaIndex][None,:,:].transpose(2, 1, 0)\
+			currentWeightDelta = np.sum(
+                                layerOutput[None,:,:].transpose(2, 0 ,1) * delta[deltaIndex][None,:,:].transpose(2, 1, 0)
                                 , axis = 0)
  
 			weightDelta = trainingRate * currentWeightDelta + momentum * self._previousWeightsDelta[index]
@@ -74,21 +101,23 @@ class BackPropagationNetwork:
 
 
 if __name__ == '__main__':
-    bpn = BackPropagationNetwork((2,2,2)) # fetch argument in command line
-    # print bpn.weights[0]
+    layers = commandLineArguments()
+    bpn = BackPropagationNetwork(layers)
+
     dataInput = np.array([[0, 0], [1, 1], [0, 1], [1, 0]])
     target = np.array([[0, 0], [0, 0], [1, 0], [1, 0]])
     
+    
     maxLoop = 1000000
-    minErr = 1e-3
+    minError = 1e-3
     for i in range (maxLoop +1 ):
-    	err = bpn.train(dataInput, target)
+    	error = bpn.train(dataInput, target)
     	if i % 10000 == 0:
-    		print("Iteration {0:d}K - Error: {1:0.6f}".format(int(i/1000), err))
-    	if err <= minErr:
+    		print("Iteration {0:d}K - Error: {1:0.4f}".format(int(i/1000), err))
+    	if error <= minError:
     		print("Termination at Iter: {0}".format(i))
     		break
 
 
     output = bpn.run(dataInput)
-    print ("Input:{0}\n Output: {1}".format(dataInput, output))
+    print ("Input:\n{0}\n Output:\n {1}".format(dataInput, output))
