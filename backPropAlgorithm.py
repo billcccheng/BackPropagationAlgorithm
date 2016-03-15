@@ -18,11 +18,77 @@ class BackPropagationNetwork:
 
 		self._layerInput = []
 		self._layerOutput = []
+		self._previousWeightsDelta = []
 
+		for(layer_one, layer_two) in zip(layerSize[:-1], layerSize[1:]):
+			self.weights.append(np.random.normal(scale = 0.1, size = (layer_two, layer_one + 1))) # +1 for the bias node
+			self._previousWeightsDelta.append(np.zeros((layer_two, layer_one + 1)))
 
-		for(input_layer, hidden_layer) in zip(layerSize[:-1], layerSize[1:]):
-			self.weights.append(np.random.normal(scale = 0.1, size = (hidden_layer, input_layer+1)))
+	def run(self, input):
+		lnCases = input.shape[0]
+		self._layerInput = []
+		self._layerOutput = []
+		for index in range(self.layerCount):
+			if index == 0:
+				layerInput = self.weights[0].dot(np.vstack([input.T, np.ones(lnCases)]))
+				# print self.weights[0], np.vstack([input.T, np.ones([1, lnCases])])
+			else:
+				layerInput = self.weights[index].dot(np.vstack([self._layerOutput[-1],np.ones(lnCases)]))
+
+			self._layerInput.append(layerInput)
+			self._layerOutput.append(sigmoid(layerInput))
+
+		return  self._layerOutput[-1].T
+
+	def train(self, input, target, trainingRate = 0.05, momentum = 0.5):
+		delta = []
+		lnCases = input.shape[0]
+
+		self.run(input)
+
+		for index in reversed(range(self.layerCount)):
+			if index == self.layerCount - 1:
+				outputDelta = self._layerOutput[index] - target.T
+				error = np.sum(outputDelta**2)
+				delta.append(outputDelta * sigmoid_derivative(self._layerInput[index]))
+			else:
+				deltaBackward = self.weights[index + 1].T.dot(delta[-1])
+				delta.append(deltaBackward[:-1,:] * sigmoid_derivative(self._layerInput[index]))
+		
+		for index in range(self.layerCount):
+			deltaIndex = self.layerCount - 1 - index	
+			if index == 0:
+				layerOutput = np.vstack([input.T, np.ones([1,lnCases])])
+			else:
+				layerOutput = np.vstack([self._layerOutput[index - 1], np.ones([1, self._layerOutput[index - 1].shape[1]])])	
+
+			currentWeightDelta = np.sum(\
+                                layerOutput[None,:,:].transpose(2, 0 ,1) * delta[deltaIndex][None,:,:].transpose(2, 1, 0)\
+                                , axis = 0)
+ 
+			weightDelta = trainingRate * currentWeightDelta + momentum * self._previousWeightsDelta[index]
+			self.weights[index] -= weightDelta
+			self._previousWeightsDelta[index] = weightDelta		
+		return error
+
 
 
 if __name__ == '__main__':
-    bpn = BackPropagationNetwork((2,2,1)) # fetch argument in command line
+    bpn = BackPropagationNetwork((2,2,2)) # fetch argument in command line
+    # print bpn.weights[0]
+    dataInput = np.array([[0, 0], [1, 1], [0, 1], [1, 0]])
+    target = np.array([[0, 0], [0, 0], [1, 0], [1, 0]])
+    
+    maxLoop = 1000000
+    minErr = 1e-3
+    for i in range (maxLoop +1 ):
+    	err = bpn.train(dataInput, target)
+    	if i % 10000 == 0:
+    		print("Iteration {0:d}K - Error: {1:0.6f}".format(int(i/1000), err))
+    	if err <= minErr:
+    		print("Termination at Iter: {0}".format(i))
+    		break
+
+
+    output = bpn.run(dataInput)
+    print ("Input:{0}\n Output: {1}".format(dataInput, output))
