@@ -3,28 +3,27 @@ import argparse
 
 def commandLineArguments():
 	parser = argparse.ArgumentParser()
-	parser.add_argument("layer", help="e.g. 2,2,2,1 means 2 input nodes, layer 1 hidden with 2 nodes, layer 2 hidden with 2 nodes, 1 output node")
-	
+	parser.add_argument("hiddern_layers", help="Layers of hidden nodes e.g. 2",type=int)
+	parser.add_argument("file", help="Input file name e.g. data.txt")
 	args = parser.parse_args()
-	arg_arrays = (args.layer.split(","))
-	arg_arrays = [int(x) for x in arg_arrays]
-	return tuple(arg_arrays)
+	return args
 
-def readDataFile:
-	data_files = [];
+def readDataFile():
+	data_files = []
 	with open('data.txt', 'rb') as f:
-    reader = csv.reader(f)
-    for row in reader:
-        data_files.append(list(row))
-    return data_files
+		reader = csv.reader(f)
+		for row in reader:
+			data_files.append(list(row))
+	return data_files
 
-def readStructureFile:
+def readStructureFile():
 	structure_files = [];
-	with open('data.txt', 'rb') as f:
-    reader = csv.reader(f)
-    for row in reader:
-        structure_files.append(list(row))
-    return structure_files
+	with open('structure_files.txt', 'rb') as f:
+	    reader = csv.reader(f)
+	    for row in reader:
+	        structure_files.append(list(row))
+	
+	return structure_files
 
 
 def sigmoid(x):
@@ -92,7 +91,6 @@ class BackPropagationNetwork:
 			currentWeightDelta = np.sum(
                                 layerOutput[None,:,:].transpose(2, 0 ,1) * delta[deltaIndex][None,:,:].transpose(2, 1, 0)
                                 , axis = 0)
- 
 			weightDelta = trainingRate * currentWeightDelta + momentum * self._previousWeightsDelta[index]
 			self.weights[index] -= weightDelta
 			self._previousWeightsDelta[index] = weightDelta		
@@ -100,24 +98,25 @@ class BackPropagationNetwork:
 
 
 
-if __name__ == '__main__':
-    layers = commandLineArguments()
-    bpn = BackPropagationNetwork(layers)
-
-    dataInput = np.array([[0, 0], [1, 1], [0, 1], [1, 0]])
-    target = np.array([[0, 0], [0, 0], [1, 0], [1, 0]])
-    
-    
-    maxLoop = 1000000
-    minError = 1e-3
-    for i in range (maxLoop +1 ):
-    	error = bpn.train(dataInput, target)
-    	if i % 10000 == 0:
-    		print("Iteration {0:d}K - Error: {1:0.4f}".format(int(i/1000), err))
-    	if error <= minError:
-    		print("Termination at Iter: {0}".format(i))
-    		break
+if __name__ == "__main__":
+	# get command line arguments
+	args = commandLineArguments()
+	inputLayers = (2,args.hiddern_layers,2)
 
 
-    output = bpn.run(dataInput)
-    print ("Input:\n{0}\n Output:\n {1}".format(dataInput, output))
+	bpn = BackPropagationNetwork(inputLayers)
+	dataInput = np.array([[0, 0], [1, 1], [0, 1], [1, 0]])
+	target = np.array([[0, 0], [0, 0], [1, 1], [1, 0]])
+	maxLoop = 1000000
+	minError = 1e-3
+	for i in range (maxLoop + 1):
+		error = bpn.train(dataInput, target)
+		if i % 10000 == 0:
+			print("Iteration @ {0:d}K - Error: {1:0.4f}".format(int(i/1000), error))
+
+		if error <= minError:
+			print("Termination at Iter: {0}".format(i))
+			break
+
+	output = bpn.run(dataInput)
+	print ("Input:\n{0}\n Output:\n {1}".format(dataInput, output))
