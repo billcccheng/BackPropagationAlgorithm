@@ -8,7 +8,7 @@ import csv
 
 def commandLineArguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("hiddern_layers", help="Layers of hidden nodes e.g. 2", type=int)
+    parser.add_argument("hiddern_layers", help="Number of hidden nodes e.g. 2. If you want to add layers go to line 161 of the program and change args.hiddern_layers to 2,2,2", type=int)
     parser.add_argument("file", help="Input file name e.g. data.txt")
     args = parser.parse_args()
     return args
@@ -158,8 +158,8 @@ if __name__ == "__main__":
     args = commandLineArguments()
     data_file, target_data, structure_file = read_data_file(args.file)
     normalized_data, normalized_target_data = normalize_data(data_file, target_data, structure_file)
+    # inputLayers = (len(data_file[0]), args.hiddern_layers, len(structure_file[-1]))
     inputLayers = (len(data_file[0]), args.hiddern_layers, len(structure_file[-1]))
-    
 
     dataInput = np.array(normalized_data) 
     target = np.array(normalized_target_data)#np.array([[0,1], [1,0], [1,0]])

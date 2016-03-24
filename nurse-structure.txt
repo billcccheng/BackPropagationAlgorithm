@@ -5,6 +5,6 @@ complete,completed,incomplete,foster
 1,2,3,more
 convenient,less_conv,critical
 convenient,inconv
-nonprob,slightly_prob,problematic
+non-prob,slightly_prob,problematic
 recommended,priority,not_recom
 not_recom,recommend,very_recom,priority,spec_prior

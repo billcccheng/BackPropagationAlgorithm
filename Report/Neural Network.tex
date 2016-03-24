@@ -29,11 +29,8 @@ The purpose of this project is to implement backpropagation algorithm described 
 \subsection{Files Turned In}
 
 \texttt{backPropAlgorithm.py\\
-\indent Case/\\
-\indent\indent data.txt\\
-\indent\indent structure.txt\\
-\indent\indent Different\_Test\_Case/\\
-\indent\indent\indent\indent test cases....
+\indent testCases.txt\\
+\indent testCases-structure.txt\\
 }
 
 \subsection{How to Compile the Program?}
@@ -52,33 +49,36 @@ In the first line of the \texttt{structure.txt} is the name of the different att
 
 \subsection{High Level Overview of Program}
 The program starts with reading in the structure file and data set file. While reading the data set files, \textbf{when it finds a missing attributes it randomly selects a value and inserts it into the missing cell}. The randomly selection of attribute values to insert was chosen is due to the fact that randomly selecting them is similar is putting weight on different attributes according to their numbers in the data set. \\
-\indent Next, it loops through all the data in the data set, calculating which attribute should be the root. After that it recursively calculates which attribute should be the leaf while recording the attribute value to the node. The program will stop that recursion when no more attributes can be selected and move on the the next branch.\\
-\indent In the last step the program prints out the tree and calculates the mean and standard deviation.
+\indent Next, it loops through the first tenth of the data in the data set, training the neural networks with the rest of nine-tenth data, and validates the one-tenth data. The program stops when the maximum iteration is met or the error rate is below a threshold.\\
+\indent In the last step the program prints out the iteration and error rate and calculates the mean and standard deviation.
 
 \subsection{Pseudo Code}
 \begin{algorithm}
- \KwData{this text}
- \KwResult{how to write algorithm with \LaTeX2e }
- initialization\;
- \While{not at end of this document}{
-  read current\;
-  \eIf{understand}{
-   go to next section\;
-   current section becomes this one\;
-   }{
-   go back to the beginning of current section\;
-  }
- }
- \caption{How to write algorithms}
+ \KwData{UCI Data Set}
+ initialize variable\\
+ data = read\_in\_data()\\
+ normalize\_data = normalize(data)\\
+ \For{the $i^{th}$ chunk of the 10 spitted data set}{
+ 	training\_data = all data except the $i^th$ data\\
+	training\_target = all target except the $i^th$ target\\
+	validation\_data = the $i^th$ data\\
+	validation\_target = the $i^th$ target data\\
+	\For{loop in max loop}{
+		error = train(training\_data, training\_target)\\
+		\If {error < min error}{
+			break
+		}
+	}
+	output = run(validation\_data)\\
+	validate errors = (validate(validation\_data, output))
+   }
+  confident\_interval\_calculation(cross\_validation\_errors)
+ \caption{Backpropagation Algorithm}
 \end{algorithm}
 
 
-\subsection{Stopping Criteria, Momentum, Training Rate}
-In this program, the stopping criteria is it stops whenever the loop exceeds 10000 epochs or when the error is less than $0.01$. 
-
 \subsection{Normalization of Input and Outputs}
-As you can see in Section \ref{table:kysymys} Table 1, the Balance Scale data set is highly inaccurate. This may be due to small number of data set (625) causing the learning algorithm to decrease in accuracy. Also note that in this program, the pruning algorithm might not have been implemented correctly leading to low accuracy of all the data sets.
-
+The input normalization was implemented by normalizing all the inputs to less than one. For example if a data set had \texttt{sunny,hot,high,weak}, this would be normalized to \texttt{[0.3333333333333333, 0.3333333333333333, 0.5, 0.5]} and the output, \texttt{no}, would be normalized to \texttt{[0,1]}
 
 \section{Data Sets}
 %ToDO: the 5 data sets
@@ -129,42 +129,22 @@ Nursery & 0.91 & 0.01 & (0.90, 0.92)\\\hline
 Hayes-Roth & 0.79 & 0.17 & (0.67, 0.92)\\\hlineB{2}
 \end{tabular}
 \caption{Statistics on Neural Network Data Set}
-\label{table:kysymys}
 \end{center}
-\label{table:kysymys}
 \end{table}
+Since in the last project, the Decision Tree, I had not fully implemented the pruning method so as you can see in Neural Network tables, all the stats are way better then the decision tree.
+The \textbf{training rates and momentum for Car evaluation and Hayes-Roth were 0.002, 0.9 respectively. The others' training rate and momentum were 0.0005 and 0.9 respectively.} All of the iteration all exceed the limit before converging to the threshold I set which was 0.01 except for the congressional voting, which has an average of 4000 epochs before it gets below the minimum error threshold ($0.005$). \\\\
+\indent The reason can be that because the standard back propagation method computed only $\frac{\partial E}{\partial w}$, the partial first derivative of the overall error function with respect to each weight in the network. Given these derivatives, we can perform a gradient descent in weight space, reducing the error with each step. It is straightforward to show that if we take infinitesimal steps down the gradient vector, running a new training epoch to recompute the gradient after each step, we will eventually reach a local minimum of the error function. However if we want to have a faster convergence, we can not take these small steps which may lead us to a local minimum rather than the global minimum, in this case we are stuck.
 
+\subsection{Momentum, Training Rate}
+It can be seen by testing that any training rates larger than 0.1 causes the neural networks to not converge, it stays at one spot until the maximum epochs is reached. The best training rate varies from data but is in the region of ${0.0001,0.001}$. Anything higher than the region causes the converging to stall and anything lower than the region causes the convergence to slow down dramatically.
 
-\section{Printing Tree}
-See file printed\_tree.txt for whole tree.\\
-\begin{lstlisting}
-safety []
-    class = unacc [low, unacc]
-    persons [med]
-        class = unacc [med, 2, unacc]
-        maint [med, 4]
-            buying [med, 4, vhigh]
-            
- Tree continues to grow ....
-\end{lstlisting}
+\subsection{Hidden Nodes and Layers}
+I used the congressional-voting data set to test the number and layer of hidden node against the speed of convergence, since the congressional voting data set was the fastest to converge comparing to all other data sets. After increasing the hidden nodes in the neural network, it seemed to have little effect against the speed of the convergence while in the first iteration, the errors were large but the convergence speed was pretty much all the same. I have researched the literature, and the only reason for the decrease of performance when adding layers is attributed to the bad initialization. However, this shouldn't apply here since I am doing pre-training.
 
-If it is the last leaf on the tree, there will be class $=$ sign indicating which classifier it represents. The elements in the brackets are the attribute values that it takes in to get to the node. For example, in the second line \texttt{class = [low, unacc]}, this represents \texttt{safety = low} which leads to the class \texttt{unacc}.
 \section{Conclusion}
-In this project we have implemented a decision tree using the ID3 algorithm and tested the decision tree accuracy with UCI repository data sets. Even though the implementation was not perfect due to the fact that the pruning was not fully implemented.\\
-\indent Out of the five data sets, the car evaluation data sets was the best data set that fitted the decision tree and the balanced scale data set was the worst fit for the decision tree implementation.
+In this project we have implemented a neural network using the back propagation algorithm and tested the network accuracy with UCI repository data sets. The overall outcome was a lot better than the decision tree for all the data sets except Hayes-Roth. This may be caused by the numerical attributes that Hayes-Roth has which is different from the other data sets. 
 \end{document}
-%\begin{figure}
-%\centering
-%\epsfig{file=Example Interface.pdf, width = 240pt}
-%\caption{Example UI}
-%\end{figure}
 
-
-%\begin{figure}[t!]
-%\centering
-%\epsfig{file=Solr_Workflow.eps, width = 240pt}
-%\caption{The sequence of events in the application}
-%\end{figure}
 
 
 
