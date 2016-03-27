@@ -1,5 +1,6 @@
 from scipy import stats
 from numpy import unravel_index
+from sklearn.cross_validation import KFold
 import scipy as sp
 import numpy as np
 import random
@@ -164,39 +165,40 @@ if __name__ == "__main__":
     dataInput = np.array(normalized_data) 
     target = np.array(normalized_target_data)#np.array([[0,1], [1,0], [1,0]])
 
-    maxLoop = 50000
+    maxLoop = 10000
     minError = 1e-1
 
-    n = len(dataInput)/10
-    cross_validation_data_input = [dataInput[i:i+n] for i in xrange(0, len(dataInput), n)]
-    cross_validation_target_input = [target[i:i+n] for i in xrange(0, len(target), n)]
+    kf = KFold(len(dataInput), n_folds=10)
+    # cross_validation_data_input = [dataInput[i:i+n] for i in xrange(0, len(dataInput), n)]
+    # cross_validation_target_input = [target[i:i+n] for i in xrange(0, len(target), n)]
 
     confidence_interval_errors = []
-    for cross_valid_index in range(len(cross_validation_data_input)):
+    iteration = 0
+    for train, test in kf:
+        iteration += 1
+        # print("%s %s" % (train, test))
+        # print dataInput[train]
+        # print target[train]
         bpn = BackPropagationNetwork(inputLayers)
-        print ("Cross Validation:{0}".format(cross_valid_index))
+        print ("Cross Validation:{0}".format(iteration))
         # print cross_validation_data_input[cross_valid_index]
-        validation_data = cross_validation_data_input[cross_valid_index]
-        validation_target = cross_validation_target_input[cross_valid_index]
-        del cross_validation_data_input[cross_valid_index]
-        del cross_validation_target_input[cross_valid_index]
         # print cross_validation_data_input
         for i in range(maxLoop + 1):
-            error = bpn.train(validation_data,validation_target)
+            error = bpn.train(dataInput[train],target[train])
             if i % 1000 == 0:
                 print("Iteration @ {0:d}K - Error: {1:0.4f}".format(int(i / 1000), error))
             if error <= minError:
                 print("Termination at Iteration: {0}".format(i))
                 break
         #input testing data
-        validation_input = np.array(validation_data) 
+        validation_input = np.array(dataInput[test]) 
+        # print validation_input
         validation_output = bpn.run(validation_input) 
+        
         # print ("Input:\n{0}\n Output:\n {1}".format(validation_input, validation_output))
         # print validation_target
-        confidence_interval_errors.append(error_calculation(validation_target, validation_output))
-        cross_validation_data_input.insert(cross_valid_index, validation_data)
-        cross_validation_target_input.insert(cross_valid_index, validation_target)
-
+        confidence_interval_errors.append(error_calculation(dataInput[test], validation_output))
+        
 
     # print confidence_interval_errors
     print confident_interval_calculation(confidence_interval_errors)
