@@ -169,8 +169,6 @@ if __name__ == "__main__":
     minError = 1e-1
 
     kf = KFold(len(dataInput), n_folds=10)
-    # cross_validation_data_input = [dataInput[i:i+n] for i in xrange(0, len(dataInput), n)]
-    # cross_validation_target_input = [target[i:i+n] for i in xrange(0, len(target), n)]
 
     confidence_interval_errors = []
     iteration = 0
@@ -181,8 +179,6 @@ if __name__ == "__main__":
         # print target[train]
         bpn = BackPropagationNetwork(inputLayers)
         print ("Cross Validation:{0}".format(iteration))
-        # print cross_validation_data_input[cross_valid_index]
-        # print cross_validation_data_input
         for i in range(maxLoop + 1):
             error = bpn.train(dataInput[train],target[train])
             if i % 1000 == 0:
@@ -190,20 +186,15 @@ if __name__ == "__main__":
             if error <= minError:
                 print("Termination at Iteration: {0}".format(i))
                 break
-        #input testing data
-        validation_input = np.array(dataInput[test]) 
-        # print validation_input
-        validation_output = bpn.run(validation_input) 
-        
-        # print ("Input:\n{0}\n Output:\n {1}".format(validation_input, validation_output))
-        # print validation_target
-        confidence_interval_errors.append(error_calculation(dataInput[test], validation_output))
-        
 
-    # print confidence_interval_errors
-    print confident_interval_calculation(confidence_interval_errors)
-    print np.mean(confidence_interval_errors)
-    print np.std(confidence_interval_errors)
+        testing_input = np.array(dataInput[test]) 
+        testing_output = bpn.run(testing_input) 
+        
+        confidence_interval_errors.append(error_calculation(target[test], testing_output))
+        
+    print "C.I: {0}".format(confident_interval_calculation(confidence_interval_errors))
+    print "mean: {0}".format(np.mean(confidence_interval_errors))
+    print "std: {0}".format(np.std(confidence_interval_errors))
 
 
 
