@@ -90,16 +90,13 @@ def sigmoid_derivative(x):
 
 
 class BackPropagationNetwork:
-    layerCount = 0
-    shape = None
-    weights = []
-
     def __init__(self, layerSize):
         self.layerCount = len(layerSize) - 1  # layerSize is a tuple
         self.shape = layerSize  # e.g. (2,2,1)
-
         self._layerInput = []
         self._layerOutput = []
+        self.shape = None
+        self.weights = []
         self._previousWeightsDelta = []
 
         for (layer_one, layer_two) in zip(layerSize[:-1], layerSize[1:]):
@@ -122,7 +119,7 @@ class BackPropagationNetwork:
 
         return self._layerOutput[-1].T
 
-    def train(self, input, target, trainingRate=0.0005, momentum=0.9):
+    def train(self, input, target, trainingRate=0.0005, momentum=0):
         delta = []
         lnCases = input.shape[0]
 
@@ -172,11 +169,9 @@ if __name__ == "__main__":
 
     confidence_interval_errors = []
     iteration = 0
+    
     for train, test in kf:
         iteration += 1
-        # print("%s %s" % (train, test))
-        # print dataInput[train]
-        # print target[train]
         bpn = BackPropagationNetwork(inputLayers)
         print ("Cross Validation:{0}".format(iteration))
         for i in range(maxLoop + 1):
@@ -186,10 +181,7 @@ if __name__ == "__main__":
             if error <= minError:
                 print("Termination at Iteration: {0}".format(i))
                 break
-
-        testing_input = np.array(dataInput[test]) 
-        testing_output = bpn.run(testing_input) 
-        
+        testing_output = bpn.run(np.array(dataInput[test]))         
         confidence_interval_errors.append(error_calculation(target[test], testing_output))
         
     print "C.I: {0}".format(confident_interval_calculation(confidence_interval_errors))
